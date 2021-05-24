@@ -38,7 +38,11 @@ def get_spark_session():
         .master("local[*]") \
         .config("spark.jars.packages", "org.mongodb.spark:mongo-spark-connector_2.12:3.0.1") \
         .config("spark.mongodb.input.uri", config.mongo_uri) \
-        .config("spark.mongodb.output.uri", config.mongo_uri)
+        .config("spark.mongodb.output.uri", config.mongo_uri) \
+        .config("spark.driver.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true") \
+        .config("spark.executor.extraJavaOptions", "-Dio.netty.tryReflectionSetAccessible=true")
+
+        #.config("spark.sql.execution.arrow.pyspark.enabled", "false")
 
     # spark_session_builder = spark_session_builder \
     #     .config("spark.executor.memory", "4g") \
