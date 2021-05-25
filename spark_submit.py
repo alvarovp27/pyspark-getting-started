@@ -2,7 +2,7 @@ from pyspark import SparkContext, SparkConf
 from pyspark.sql import SparkSession
 
 import config
-from pyspark_getting_started import word_count, read_mongodb
+from pyspark_getting_started import word_count, read_mongodb, mongodb_to_csv, groupby_pandas_udf, groupby_arrays
 
 """
 Create SparkContext.
@@ -53,4 +53,7 @@ def get_spark_session():
     return spark_session_builder.getOrCreate()
 
 # word_count.apply(get_spark_context(), example_data)
-read_mongodb.apply(get_spark_session())
+# read_mongodb.apply(get_spark_session())
+# mongodb_to_csv.apply(get_spark_session())
+# groupby_pandas_udf.apply(get_spark_session())
+groupby_arrays.apply(get_spark_session())
