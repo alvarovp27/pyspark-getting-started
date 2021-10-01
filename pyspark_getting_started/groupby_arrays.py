@@ -29,6 +29,8 @@ def apply(spark: SparkSession):
     #     .groupBy("id").agg(f.collect_list("l"))
 
     # ALTERNATIVE 2 (directly specify the struct in collect_list)
+    # Result: Grouped by case id. Each case id => a list with the sensor name and the avg temperature for that
+    # sensor-and-id
     grouped_by_id_collected = ds.groupBy("id", "sensor") \
         .agg(f.avg("temperature").alias("avgTemperature")) \
         .groupBy("id").agg(f.collect_list(f.struct(["sensor", "avgTemperature"])).alias("l"))
@@ -43,10 +45,32 @@ def apply(spark: SparkSession):
     # https://medium.com/@fqaiser94/manipulating-nested-data-just-got-easier-in-apache-spark-3-1-1-f88bc9003827 (ONLY IN 3.1.1)
     # https://docs.databricks.com/spark/latest/dataframes-datasets/complex-nested-data.html
 
-    grouped_by_id_collected \
+    # transforms:
+    # root
+    #  |-- id: string (nullable = true)
+    #  |-- l: array (nullable = true)
+    #  |    |-- element: struct (containsNull = false)
+    #  |    |    |-- sensor: string (nullable = true)
+    #  |    |    |-- avgTemperature: double (nullable = true)
+    # into:
+    # root
+    #  |-- id: string (nullable = true)
+    #  |-- avgTempTanque: double (nullable = true)
+    #  |-- avgTempPasteurizador: double (nullable = true)
+    # Basically, converts sensor field in column, which value=avgTemperature for that sensor
+
+    final_fd = grouped_by_id_collected \
         .withColumn("avgTempTanque", f.expr("filter(l, x -> x.sensor == 'tanque')")) \
         .withColumn("avgTempTanque", f.expr("transform(avgTempTanque, x -> x.avgTemperature)[0]")) \
         .withColumn("avgTempPasteurizador", f.expr("filter(l, x -> x.sensor == 'pasteurizador')")) \
         .withColumn("avgTempPasteurizador", f.expr("transform(avgTempPasteurizador, x -> x.avgTemperature)[0]")) \
         .select("id", "avgTempTanque", "avgTempPasteurizador") \
-        .show()
+
+    final_fd.show()
+    final_fd.printSchema()
+#
+#    ds.groupBy("id").agg(f.collect_list(f.struct(["sensor", "timestamp", "finished", "temperature"])).alias("l"))\
+#        .withColumn("sensors", f.expr("group by l.sensor"))\
+#        .show(truncate=False)
+
+    # ds.groupBy("id", "sensor", "finished")
